@@ -85,6 +85,5 @@ class EnzymeSolution:
 
 if __name__ == '__main__':
     enzyme = EnzymeSolution()
-    print(enzyme.filter_json())
-    print(enzyme.create_coor())
-    # print(enzyme.closest_to_union())
+
+    print(enzyme.closest_to_union())
