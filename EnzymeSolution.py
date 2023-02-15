@@ -16,24 +16,28 @@ We are looking for:
 
 class EnzymeSolution:
     # CONST Class Variables
-    JSON_URL = "https://data.sfgov.org/resource/rqzj-sfat.json"
-    UNIONSQ_COOR = (37.788037692341184, -122.4073609530195)
-    FAC_TYPE = "Truck"
-    JAPANESE_FOOD = ["japan", "poke", "japanese"]
-    FILTERS = ['facilitytype', 'fooditems']
+    json_url = "https://data.sfgov.org/resource/rqzj-sfat.json"
+    unionsq_coor = (37.788037692341184, -122.4073609530195)
+    fac_type = "Truck"
+    japanese_food = ["japan", "poke"]
+    filters = ['facilitytype', 'fooditems', 'latitude', 'longitude']
 
     # FN Get JSON from website
     def get_json(self):
-        with urllib.request.urlopen(self.JSON_URL) as url:
-            json_data = json.load(url)
+        try:
+            with urllib.request.urlopen(self.json_url) as url:
+                json_data = json.load(url)
 
             return json_data
+        except ValueError:
+            print("Error Pulling JSON from URL")
 
-    # Parse JSON into objects
-    def clean_json(self):
-        json_data = self.get_json()
+    # Clean JSON of incomplete data
+    def clean_json(self, json_data=None):
+        if json_data is None:
+            json_data = self.get_json()
 
-        for j in self.FILTERS:
+        for j in self.filters:
             for i in json_data:
                 if j not in i:
                     json_data.remove(i)
@@ -41,17 +45,17 @@ class EnzymeSolution:
         return json_data
 
     # FN to Filter List of Objects
-    def filter_json(self, food_list=None):
-        if food_list is None:
-            food_list = self.JAPANESE_FOOD
+    def filter_json(self, json_data=None):
+        if json_data is None:
+            json_data = self.clean_json()
 
         data = []
 
-        for i in self.clean_json():
-            if i['facilitytype'] == self.FAC_TYPE:
-                for j in self.JAPANESE_FOOD:
-                    if re.search(j, i['fooditems'].lower()):
-                        data.append(i)
+        for entry in json_data:
+            if entry['facilitytype'] == self.fac_type:
+                for j in self.japanese_food:
+                    if re.search(j, entry['fooditems'].lower()):
+                        data.append(entry)
 
         return data
 
@@ -64,7 +68,7 @@ class EnzymeSolution:
 
         for i in json_data:
             coors[i['applicant'] + ' - ' + i['address']] = geopy.distance.geodesic((i['latitude'], i['longitude']),
-                                                                                   self.UNIONSQ_COOR).miles
+                                                                                   self.unionsq_coor).miles
 
         return coors
 
@@ -81,5 +85,6 @@ class EnzymeSolution:
 
 if __name__ == '__main__':
     enzyme = EnzymeSolution()
-
-    print(enzyme.closest_to_union())
+    print(enzyme.filter_json())
+    print(enzyme.create_coor())
+    # print(enzyme.closest_to_union())
